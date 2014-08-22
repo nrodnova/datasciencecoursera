@@ -13,4 +13,6 @@ drwxr-xr-x@  6 user  staff     204 Nov 29  2012 train
 ```
 
 
-The script doesn't take any parameters, and outputs a file named aggregatedDataSet.txt into the current directory
+The script doesn't take any parameters, and outputs a file named aggregatedDataSet.txt into the current directory. 
+
+Additionally, it prints a file named result.txt with the first dataset from the assignment document, which wasn't requested to be stored. Also, the script prints a file named colnames.txt with column names that were used in CodeBook.md. Both additional files can be ignored.

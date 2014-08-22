@@ -42,6 +42,13 @@ selectedColumns <- c(meanColumns, stdColumns)
 selectedColumnNames <- colnames(combinedSet)[selectedColumns]
 resultSet <- combinedSet[, selectedColumns]
 
+# Beautify column names
+selectedColumnNames <- gsub("-mean\\(\\)-", "Mean", selectedColumnNames)
+selectedColumnNames <- gsub("-mean\\(\\)", "Mean", selectedColumnNames)
+selectedColumnNames <- gsub("-std\\(\\)-", "StdDev", selectedColumnNames)
+selectedColumnNames <- gsub("-std\\(\\)", "StdDev", selectedColumnNames)
+colnames(resultSet) <- selectedColumnNames
+
 #Add activity labels
 combinedLabels <- rbind(trainingLabels, testingLabels)
 resultLabels <- merge(combinedLabels, labelNames)
@@ -49,6 +56,7 @@ resultLabels <- merge(combinedLabels, labelNames)
 # Create result data set with activity labels and subject info
 resultSet <- cbind(resultLabels, combinedSubjects, resultSet)
 head(resultSet)
+write.table(resultSet, "./result.txt")
 
 # Now, create the second data set with average info grouped by activity and subject
 
@@ -66,4 +74,4 @@ head(aggregatedSet[,1:10 ])
 any(is.na(aggregatedSet))
 
 write.table(aggregatedSet, "./aggregatedDataSet.txt")
-
+write.table(selectedColumnNames, "./colnames.txt", row.names=FALSE, col.names=FALSE) #Save for use in .md file
