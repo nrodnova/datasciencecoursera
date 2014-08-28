@@ -73,5 +73,5 @@ head(aggregatedSet[,1:10 ])
 # Check for NA
 any(is.na(aggregatedSet))
 
-write.table(aggregatedSet, "./aggregatedDataSet.txt")
+write.table(aggregatedSet, "./aggregatedDataSet.txt", row.names = FALSE)
 write.table(selectedColumnNames, "./colnames.txt", row.names=FALSE, col.names=FALSE) #Save for use in .md file
