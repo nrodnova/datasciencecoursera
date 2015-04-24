@@ -1,0 +1,260 @@
+---
+title: "Machine Learning Course Project"
+date: "Wednesday, April 22, 2015"
+output:  
+  html_document:
+    fig_height: 8
+    fig_width: 10
+
+---
+
+## Summary
+
+The goal of the project is to analyse the dataset containing sensor readings of 6 participants performing bycep curls correctly and incorrectly in 5 different ways, and build a model that predicts the manner in which the participants did the exercise. This report describes how we built our model, how we used cross validation, what  the expected out of sample error is, and how we selected the model for the prediction. We will use our prediction model to predict 20 different test cases. 
+
+## Explore the Dataset
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(caret)
+library(data.table)
+library(gridExtra)
+library(randomForest)
+
+# Read data
+```
+```{r, eval=FALSE, echo=FALSE}
+training <- read.csv(file="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
+testing <- read.csv(file="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
+```
+
+```{r, cache=TRUE, message=FALSE, echo=FALSE}
+training <- read.csv("pml-training.csv")
+testing <- read.csv("pml-testing.csv")
+
+```
+
+This dataset was created during the study "Qualitative Activity Recognition of Weight Lifting Exercises" (http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf). The dataset contains sensor readings of 6 participants performing bycep curls correctly and incorrectly in 5 different ways. The data contains raw readings from the sensors attached to the participants and to the dumbbell, as well as 8 aggregate values for each raw measurment during sliding time windows (generating in total 96 derived features).
+
+Because 96 derived measurement s are populated only for the rows corresponding to the end of the window, most of the rows have NAs in those columns.
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+dt.all.data <- training
+dt.seq <- data.table(dt.all.data)[, list(seq=1:length(X)), by=c('num_window')]
+
+dt.data <- dt.all.data[dt.all.data$new_window=="yes",] # Only aggregate data
+dt.all.data$seq <- dt.seq$seq
+
+# Clean data
+
+n <- data.frame(apply(dt.data[, 8:159], 2, function(x) as.numeric(as.character(x))))
+dt.sample <- cbind.data.frame(n, dt.data[,c(1,2)], classe = dt.data$classe, num_window=dt.data$num_window)
+
+c <- data.table(c=colnames(dt.sample))
+
+exclude.columns <- unname(c('roll_belt', 'pitch_belt', 'yaw_belt', 'roll_arm', 'pitch_arm', 'yaw_arm', 'roll_dumbbell', 'pitch_dumbbell', 'yaw_dumbbell', 'roll_forearm', 'pitch_forearm', 'yaw_forearm', unlist(c[c %like% "_x",]), unlist(c[c %like% "_y",]), unlist(c[c %like% "_z",])))
+```
+
+
+```{r,echo=FALSE,}
+col.selection <- unlist(lapply(dt.all.data, function(x){sum(is.na(x)) == 0}))
+col.names <- names(col.selection[col.selection == TRUE])
+```
+
+Number of non-derived columns: `r length(col.names) - 9`. These are the features we'll be working with.
+
+Let's look at some raw readings and see how they differ for different class types.
+
+```{r, echo=FALSE,message=FALSE}
+# Non-null columns
+col.selection <- unlist(lapply(dt.sample, function(x){sum(is.na(x)) == 0}))
+col.selection <- unlist(c[(c %in% colnames(dt.sample)[col.selection]) & !(c %in% exclude.columns)])
+dt.sample <- dt.sample[,col.selection]
+
+
+
+# Plot some fields
+p1 <- ggplot(dt.all.data[dt.all.data$num_window < 100,], aes(x=seq, y=accel_belt_x, colour=classe)) + geom_point() + theme( legend.position = c( 1,0), legend.justification = c( 1,0))
+
+p2 <- ggplot(dt.all.data[dt.all.data$num_window < 100,], aes(x=seq, y=roll_belt, colour=classe)) + geom_point() + theme( legend.position = c( 1,0), legend.justification = c( 1,0))
+
+p3 <- ggplot(dt.all.data[dt.all.data$num_window < 100,], aes(x=seq, y=accel_arm_x, colour=classe)) + geom_point() + theme( legend.position = c( 1,0), legend.justification = c( 1,0))
+
+p4 <- ggplot(dt.all.data[dt.all.data$num_window < 100,], aes(x=seq, y=roll_forearm, colour=classe)) + geom_point() + theme( legend.position = c( 1,0), legend.justification = c( 1,0))
+
+grid.arrange(p1, p2, p3, p4, ncol=2, nrow=2, main="Exploratory Analysis")
+
+
+```
+
+## Model selection
+
+We'll divide our training set into 2 subsets - training and testing,  fit several models, and pick the best one. Our goal is to predict 'classe' variable.
+
+### Linear Regression
+First, we'll try to fit linear regression and see what the results look like:
+
+```{r, echo=FALSE}
+# Split sample set into the training and testing sets
+
+dt.sample$user_name <- as.factor(as.numeric(dt.sample$user_name))
+inTrain <- unlist(createDataPartition(y=dt.sample$num_window, p=0.8, list=T))
+dt.training <- dt.sample[inTrain,]
+dt.testing <- dt.sample[-inTrain,]
+dt.training$classe <- as.numeric(dt.training$classe)
+```
+
+```{r}
+# use linear regression first?
+fit <- lm(classe ~ .-num_window-X-user_name-amplitude_pitch_belt, dt.training, na.action="na.exclude")
+#summary(fit)
+
+in.sample.error <- (sum(round(predict(fit, dt.training), 0) != dt.training$classe))/nrow(dt.training)
+dt.testing$classe <- as.numeric(dt.testing$classe)
+out.of.sample.error <- (sum(round(predict(fit, dt.testing), 0) != dt.testing$classe))/nrow(dt.testing)
+
+```
+As expected, straight-forward regression gives really poor results:
+
+In-sample error: `r round(in.sample.error * 100, 2)`%.
+
+Out-of-sample error: `r round(out.of.sample.error * 100, 2)`%.
+
+
+### Principal Components
+
+Results from PCA model:
+
+```{r}
+#Use PCA
+preProc <- preProcess(dt.training[, 1:(length(colnames(dt.training))-4)],method="pca",pcaComp=20)
+
+trainPC <- predict(preProc, dt.training[, 1:(length(colnames(dt.training))-4)])
+fitPC <- train(dt.training$classe ~ .,method="glm",data=trainPC)
+
+# % of bad prediction
+in.sample.error <- sum(((round(predict(fitPC, trainPC))) != dt.training$classe))/nrow(dt.training)
+
+trainPC <- predict(preProc, dt.testing[, 1:(length(colnames(dt.testing))-4)])
+fitPC <- train(dt.testing$classe ~ .,method="glm",data=trainPC)
+out.of.sample.error <- sum(((round(predict(fitPC, trainPC))) != dt.testing$classe))/nrow(dt.testing)
+
+```
+
+In-sample error: `r round(in.sample.error * 100, 2)`%.
+
+Out-of-sample error: `r round(out.of.sample.error * 100, 2)`%.
+
+Which is worse than guessing.
+
+
+### Trees 
+
+Results from tree model:
+
+```{r, echo=FALSE}
+dt.training$classe <- factor(dt.training$classe)
+dt.testing$classe <- factor(dt.testing$classe)
+library(e1071)
+
+```
+```{r, message=FALSE, warning=TRUE}
+# Trees
+modFit <- train(classe ~ .,method="rpart",data=dt.training)
+
+# Error ratio
+in.sample.error <- sum(predict(modFit, dt.training) != dt.training$classe) / nrow(dt.training)
+
+out.of.sample.error <- sum(predict(modFit, dt.testing) != dt.testing$classe)/nrow(dt.testing)
+```
+
+In-sample error: `r round(in.sample.error * 100, 2)`%.
+
+Out-of-sample error: `r round(out.of.sample.error * 100, 2)`%.
+
+It's obviouslt better than regression, but still not good enough.
+
+### Random Forests
+
+And, finally, we'll build a Random Forests model:
+
+```{r, echo=FALSE, warning=FALSE}
+
+# Random forests
+#fit.rf.all <- train(classe~ .,data=dt.training,method="rf",prox=TRUE)
+#print(fit.rf.all$finalModel)
+n <- data.frame(apply(dt.all.data[, 8:159], 2, function(x) as.numeric(as.character(x))))
+dt.sample <- cbind.data.frame(n, dt.all.data[,c(1,2, 6, 7)], classe = dt.all.data$classe)
+dt.sample <- dt.sample[dt.sample$new_window != "yes",]
+col.selection <- unlist(lapply(dt.sample, function(x){sum(is.na(x)) == 0}))
+dt.sample <- dt.sample[,col.selection]
+
+inTrain <- unlist(createDataPartition(y=dt.sample$X, p=0.8, list=T))
+
+dt.training <- dt.sample[inTrain,]
+dt.testing <- dt.sample[-inTrain,]
+dt.training$num_window=NULL
+dt.training$new_window=NULL
+dt.training$X=NULL
+```
+
+```{r, cache=TRUE}
+rf <- randomForest(classe~ .,data=dt.training)
+#print(rf)
+
+in.sample.error <- sum(predict(rf, dt.training) != dt.training$classe) / nrow(dt.training)
+
+out.of.sample.error <- sum(predict(rf, dt.testing) != dt.testing$classe) / nrow(dt.testing)
+
+```
+
+In-sample error: `r round(in.sample.error * 100, 2)`%.
+
+Out-of-sample error: `r round(out.of.sample.error * 100, 2)`%.
+
+### Conclusion
+
+From the error ratios reported above, It's obvious that the Random Forest model is the most suitable in our case. Other models, the linear regression in particular, were not expected to perform well for this particular problem, and were run mostly to demostrate this point.
+
+
+## Cross-validation and out-of-sample error estimation
+
+We'll perform cross-validation on our training set to better estimate out-of-sample error. We'll use K-fold method with K=10.
+
+```{r, cache=TRUE}
+number.of.partitions <- 10
+data.partition <- createDataPartition(y=dt.sample$X, p=0.8, times=number.of.partitions)
+
+rfs <- list()
+in.sample.errors <- c()
+out.of.sample.errors <- c()
+for (ii in 1:10)
+  {
+    dt.training <- dt.sample[data.partition[[ii]],]
+    dt.testing <- dt.sample[-data.partition[[ii]],]
+    dt.training$num_window=NULL
+    dt.training$new_window=NULL
+    dt.training$X=NULL
+    rf <- randomForest(classe~ .,data=dt.training)
+    in.sample.error <- sum(predict(rf, dt.training) != dt.training$classe)/nrow(dt.training)
+    out.of.sample.error <- sum(predict(rf, dt.testing) != dt.testing$classe)/nrow(dt.testing)
+    rfs <- list(rfs, list(rf))
+    in.sample.errors <- c(in.sample.errors, in.sample.error)
+    out.of.sample.errors <- c(out.of.sample.errors, out.of.sample.error)
+  }
+```
+```{r, echo=FALSE}
+result <- data.frame(in.sample.errors=round(in.sample.errors * 100, 2), out.of.sample.errors=round(out.of.sample.errors * 100, 2))
+
+result
+```
+
+Average out-of-sample error is: `r round(mean(out.of.sample.errors) * 100, 2)` %.
+
+
+## Project Assignment Predictions
+
+Finally, let's use our random forest model to predict exercise quality on our project assignment test sample:
+
+```{r}
+  predict(rf, testing)
+```
