@@ -26,7 +26,7 @@ knit        : slidify::knit2slides
 
 <b>Application location</b>: https://natalia-r.shinyapps.io/CourseProjectApp/
 
-<b>Source code location</b>: 
+<b>Source code location</b>: <a href="https://github.com/nrodnova/datasciencecoursera/tree/master/DevelopingDataProducts/CourseProjectApp">Link to github.com</a>
 
 --- .class #id 
 
@@ -100,6 +100,5 @@ displayResidualsDiagnostics(fit)
 
 ## Source of this slides
 <hr>
-<br>
-http://nrodnova.github.com
+<br> <a href="https://github.com/nrodnova/datasciencecoursera/tree/master/DevelopingDataProducts/CourseProject">Link to github.com</a>
 
