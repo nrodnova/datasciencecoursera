@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Interactive Linear Regression Demo</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Interactive Linear Regression Demo">
+  <meta name="author" content="Coursera">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Interactive Linear Regression Demo</h1>
+    <h2>Data Science Course Project</h2>
+    <p>Coursera<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Summary</h2>
+  </hgroup>
+  <article data-timings="">
+    <hr>
+
+<p><b>Application purpose</b>: demonstrate capabilities that <em>Shiny</em> package offers, while exploring properties of Linear Regression.</p>
+
+<p><b>Features</b>: This is an interactive application created using <i>Shiny</i> platform, allowing users to experiment with selecting variables for Linear Regression model using well-familiar <i>mtcars</i> data set.</p>
+
+<ul>
+<li>Select any combination of variables to build the regression on</li>
+<li>Receive summary describing model fit quality</li>
+<li>Compare results between different variable selections</li>
+<li>Explore how each variable affects residuals</li>
+<li>See how each variable interacts with miles-per-gallon values</li>
+</ul>
+
+<p><b>Application location</b>: <a href="https://natalia-r.shinyapps.io/CourseProjectApp/">https://natalia-r.shinyapps.io/CourseProjectApp/</a></p>
+
+<p><b>Source code location</b>: </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Inputs and Outputs</h2>
+  </hgroup>
+  <article data-timings="">
+    <hr>
+
+<p>As shown in the screen shot below, user can select any combination of the variables to be used by lthe linear regression model to predict miles-per-gallon value. The app also offers help in eliminating less important coefficients based on p-value (&#39;Unselect Worst&#39; button).</p>
+
+<div style='text-align: center; '>
+    <img style="max-width: 100%;max-height: 100%;" src='inputs.png' />
+</div>
+
+<p>On the right side of the screen, the app shows what formula is used in lm() function, and also shows residual standard error and adjusted r-squared values for current and previous runs. It also saves the best fit observed.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>Graphs</h2>
+  </hgroup>
+  <article data-timings="">
+    <hr>
+
+<p>Based on the variables selected in the &quot;Inputs&quot; section, the &quot;Residuals&quot; tab plots residuals for the corresponding model, as well as Q-Q plot. The plot is interactive and allows to see how variable selection affects residuals.</p>
+
+<pre><code class="r">fit &lt;- lm(mpg ~ hp + wt + qsec + am, data=mtcars)
+displayResidualsDiagnostics(fit)
+</code></pre>
+
+<p><img src="assets/fig/unnamed-chunk-2-1.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" style="display: block; margin: auto;" /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>Why this application is great</h2>
+  </hgroup>
+  <article data-timings="">
+    <hr>
+
+<p><br></p>
+
+<ul>
+<li>It is created with Shiny</li>
+<li>It is interactive and pretty</li>
+<li>It is educational</li>
+</ul>
+
+<h2>Source of this slides</h2>
+
+<hr>
+
+<p><br>
+<a href="http://nrodnova.github.com">http://nrodnova.github.com</a></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Summary'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Inputs and Outputs'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Graphs'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Why this application is great'>
+         4
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>

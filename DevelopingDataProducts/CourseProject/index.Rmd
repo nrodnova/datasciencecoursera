@@ -1,0 +1,105 @@
+---
+title       : Interactive Linear Regression Demo
+subtitle    : Data Science Course Project
+author      : Coursera
+job         : 
+framework   : io2012   # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## Summary
+
+<hr>
+
+<b>Application purpose</b>: demonstrate capabilities that <em>Shiny</em> package offers, while exploring properties of Linear Regression.
+
+<b>Features</b>: This is an interactive application created using <i>Shiny</i> platform, allowing users to experiment with selecting variables for Linear Regression model using well-familiar <i>mtcars</i> data set.
+* Select any combination of variables to build the regression on
+* Receive summary describing model fit quality
+* Compare results between different variable selections
+* Explore how each variable affects residuals
+* See how each variable interacts with miles-per-gallon values
+
+<b>Application location</b>: https://natalia-r.shinyapps.io/CourseProjectApp/
+
+<b>Source code location</b>: 
+
+--- .class #id 
+
+## Inputs and Outputs
+<hr>
+As shown in the screen shot below, user can select any combination of the variables to be used by lthe linear regression model to predict miles-per-gallon value. The app also offers help in eliminating less important coefficients based on p-value ('Unselect Worst' button).
+
+<div style='text-align: center; '>
+    <img style="max-width: 100%;max-height: 100%;" src='inputs.png' />
+</div>
+
+On the right side of the screen, the app shows what formula is used in lm() function, and also shows residual standard error and adjusted r-squared values for current and previous runs. It also saves the best fit observed.
+
+---
+
+## Graphs
+
+<hr>
+Based on the variables selected in the "Inputs" section, the "Residuals" tab plots residuals for the corresponding model, as well as Q-Q plot. The plot is interactive and allows to see how variable selection affects residuals.
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+library(ggplot2)
+library(gridExtra)
+
+displayResidualsDiagnostics <- function(fit) {
+r <- unname(resid(fit))
+df.residuals <- data.frame(x=1:length(r), y=r)
+p1 <- ggplot(df.residuals, aes(x=x, y=y)) + 
+  geom_bar(stat="identity", position="identity") + 
+  guides(fill=F) + 
+  ggtitle("Model Residuals") + 
+  theme(plot.title=element_text(size=rel(1.1),vjust=1)) + 
+  xlab("Observation") + ylab("Residuals") + 
+  scale_y_continuous(limits = c(-10, 10))
+
+x1 <- qnorm(ppoints(r))
+       probs <- c(0.25, 0.75)
+       y.q <- quantile(r, probs)
+       x.q <- qnorm(probs)
+       slope <- unname(diff(y.q)/diff(x.q))
+      int <- unname(y.q[1L] - slope * x.q[1L])
+     
+      df.qqplot <- data.frame(x=x1, y=sort(r))
+      
+      p2 <- ggplot(df.qqplot, aes(x=x,y=y)) + 
+         geom_point(size=3) +
+         geom_abline(intercept = int, slope=slope, size=1, colour="darkred") +
+         xlab("Theoretical quantiles") +
+         ylab("Sample Quantiles") +
+         ggtitle("Normal Q-Q Plot") +
+        scale_y_continuous(limits = c(-5, 5))
+       
+      grid.arrange(p1, p2, ncol=2, main="Residuals Diagnostics")
+}
+```
+
+```{r,warning=FALSE,error=FALSE, fig.width=10, fig.height=4.5, fig.align='center'}
+fit <- lm(mpg ~ hp + wt + qsec + am, data=mtcars)
+displayResidualsDiagnostics(fit)
+```
+
+---
+
+## Why this application is great
+
+<hr>
+<br>
+* It is created with Shiny
+* It is interactive and pretty
+* It is educational
+
+## Source of this slides
+<hr>
+<br>
+http://nrodnova.github.com
+
